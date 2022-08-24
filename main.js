@@ -1,4 +1,5 @@
 var layer_selections = {};
+
 /*
 Layer id: 
     [Item id, Variant id, Variant color]
@@ -12,6 +13,7 @@ let cf;
 let base_id = 22352
 const data_directory = "data/"
 
+let enable_tinting = false
 let img_cache = {};
 
 
@@ -21,6 +23,9 @@ parameters.forEach(parameter => {
     let value = parameter.split("=")[1]
     if(name == "id"){
         base_id = parseInt(value)
+    }
+    if(name == "enable-tinting" && value == 1){
+        enable_tinting = true 
     }
 })
 
@@ -110,6 +115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         htmladd += "<div class='part_s'>"
+        htmladd += "<div class='part-title-area'>"
         htmladd += "<div class='part-title'>"
         htmladd += "<img src='" + data_directory + base_id+ "/" + part.BaseDirectory + "/" + part.ThumbnailFilename + "'>"
         htmladd += "<h3>" + part.Name + "</h3>"
@@ -117,6 +123,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         htmladd += "</div>"
 
+        if(enable_tinting){
+            htmladd += "<div class='part-tint-options'>"
+            htmladd += "<h3>Tint</h3>"
+            htmladd += "<div>"
+            htmladd += "<label class='switch'><input type='checkbox' class='part-tint-enable' onchange='updateTintControl(this)' data-part-id='" + part.ID + "'><span class='slider'></span></label>"
+            htmladd += "<input type='color' class='part-tint-control' onchange='updateTintControl(this)' data-part-id='" + part.ID + "'>"
+            htmladd += "</div>"
+            htmladd += "</div>"
+        }
+
+        htmladd += "</div>"
 
         htmladd += "<div class='item_list'>"
         for (let j = 0; j < part.Items.length; j++) {
@@ -153,7 +170,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 item.Variants.forEach(variant => {
 
                 })
-                layer_selections[part.ID+""] = [item.ItemID,item.Variants[0].VariantID,item.Variants[0].VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
+                //layer_selections[part.ID+""] = [item.ItemID,item.Variants[0].VariantID,item.Variants[0].VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
+                layer_selections[part.ID+""] = {
+                    Visible: true,
+                    ItemID: item.ItemID,
+                    VariantID: item.Variants[0].VariantID,
+                    VariantColor: item.Variants[0].VariantColor,
+                    EnableTint: false,
+                    TintColor: [0, 0, 0]
+                }
                 //console.log(layer_selections[part.ID])
             }
         });
@@ -174,6 +199,10 @@ async function render(){
     for (let i = 0; i < 100; i++) {
         layers.push("")    
     }
+    let layer_tint_data = [];
+    for (let i = 0; i < 100; i++) {
+        layer_tint_data.push([])
+    }
 
 
     for (let i = 0; i < parts.length; i++) {
@@ -181,17 +210,25 @@ async function render(){
         const id = part.ID;
         const variantID = layer_selections[id+""];
         if(variantID == undefined || variantID.length == 0) continue;
-        console.log(variantID)
-        console.log(part)
-        let item = part.Items.find(e => e.ItemID == variantID[0])
-        let vari = item.Variants.find(e => e.VariantID == variantID[1])
-        if(variantID[2]){
-            vari = item.Variants.find(e => e.VariantColor == variantID[2]) // variantID[2] is color
+        if(!variantID.Visible) continue;
+        
+        let item = part.Items.find(e => e.ItemID == variantID.ItemID)
+        let vari = item.Variants.find(e => e.VariantID == variantID.VariantID)
+        if(variantID.VariantColor){
+            vari = item.Variants.find(e => e.VariantColor == variantID.VariantColor) // variantID[2] is color
         }
-        console.log(vari)
         vari.Layers.forEach(l => {
             layers[l.zIndex] = data_directory + base_id + "/" + part.BaseDirectory + "/" + item.BaseDirectory + "/" + l.url
         })
+        if(enable_tinting){
+            vari.Layers.forEach(l => {
+                layer_tint_data[l.zIndex] = [variantID.EnableTint, ...variantID.TintColor]
+            })
+        } else {
+            vari.Layers.forEach(l => {
+                layer_tint_data[l.zIndex] = [false, ...variantID.TintColor]
+            })
+        }
         /*part.Layers.forEach(lyr => {
             layers[lyr] = url
         })*/
@@ -220,6 +257,35 @@ async function render(){
                 })
             }
         }
+        if(layer_tint_data[i][0]){
+            const tint_data = layer_tint_data[i]
+            const hash = btoa(encodeURIComponent(url)+tint_data[1]+tint_data[2]+tint_data[3])
+            if(document.getElementById(hash)==null){
+                await new Promise(function(done){
+                    let image = document.getElementById(btoa(encodeURIComponent(url)))
+                    var rgbks = generateRGBKs( image );
+                    var tintImg = generateTintImage( image, rgbks, tint_data[1], tint_data[2], tint_data[3]);
+                    //var tintImg = multiply(image,"#990");
+
+                    tintImg.toBlob(b => {
+                        let blobURL = URL.createObjectURL(b)
+                        let image = document.createElement("img")
+                        image.onload = async () => {
+                            img_cache[url] = true
+                            image.id = hash
+                            document.getElementById("imgcache").appendChild(image)
+                            done()
+                        }
+                        image.onerror = () =>{
+                            done()
+                        }
+
+                        image.src = blobURL
+                    })
+                    
+                })
+            }
+        }
     }
 
     /*
@@ -232,8 +298,31 @@ async function render(){
     for (let i = 0; i < layers.length; i++) {
         const url = layers[i];
         if(url != "" && url){
-            ctx.drawImage(document.getElementById(btoa(encodeURIComponent(url))),0,0)
-            await new Promise(function(done){
+            const tintData = layer_tint_data[i]
+            console.log(tintData)
+
+            if(!tintData[0]){
+                let image = document.getElementById(btoa(encodeURIComponent(url)))
+                /*var rgbks = generateRGBKs( image );
+                var tintImg = generateTintImage( image, rgbks, 200, 50, 100 );*/
+                ctx.drawImage(image,0,0)
+            } else {
+                const tint_hash = btoa(encodeURIComponent(url)+tintData[1]+tintData[2]+tintData[3])
+                let image = document.getElementById(tint_hash)
+                /*var rgbks = generateRGBKs( image );
+                var tintImg = generateTintImage( image, rgbks, tintData[1], tintData[2], tintData[3]);
+                //var tintImg = multiply(image,"#990");
+
+                tintImg.toBlob(b => {
+                    let blobURL = URL.createObjectURL(b)
+                    
+                })
+                */
+               
+
+                ctx.drawImage(image,0,0)
+            }
+            /*await new Promise(function(done){
                 if(document.getElementById(btoa(encodeURIComponent(url)))==null){
                     //let image = new Image();
                     let image = document.createElement("img")
@@ -250,7 +339,7 @@ async function render(){
                     done()
                 }
                 //console.log(url)
-            })
+            })*/
         }
     }
 
@@ -275,18 +364,24 @@ function update_canvas(i){
     parts.find(e => e.PartID == pID).Items.forEach(item => {
         if(item.ItemID == iID){
             if(typeof layer_selections[pID+""] == 'undefined'){
-                layer_selections[pID+""] = []
+                layer_selections[pID+""] = {}
             }
 
-            layer_selections[pID+""][0] = item.ItemID
-            layer_selections[pID+""][1] = item.Variants[0].VariantID
-            if(typeof layer_selections[pID+""][2] == 'undefined'){
-                layer_selections[pID+""][2] = item.Variants[0].VariantColor
+            layer_selections[pID+""].ItemID = item.ItemID
+            layer_selections[pID+""].VariantID = item.Variants[0].VariantID
+            if(typeof layer_selections[pID+""].VariantColor == 'undefined'){
+                layer_selections[pID+""].VariantColor = item.Variants[0].VariantColor
             }
+            layer_selections[pID+""].Visible = true
             item.Variants.forEach(variant => {
                 if(i.dataset.variantColor){
                     if(variant.VariantColor == i.dataset.variantColor){
-                        layer_selections[pID+""] = [item.ItemID,variant.VariantID,variant.VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
+                        //layer_selections[pID+""] = [item.ItemID,variant.VariantID,variant.VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
+                        layer_selections[pID+""].ItemID = item.ItemID
+                        layer_selections[pID+""].VariantID = variant.VariantID 
+                        layer_selections[pID+""].VariantColor = variant.VariantColor 
+                        layer_selections[pID+""].Visible = true
+                        
                     }
                 }
             })
@@ -300,7 +395,7 @@ function update_canvas(i){
 
 function clear_part(i){
     const pID = i.dataset.partId
-    layer_selections[pID+""] = []
+    layer_selections[pID+""].Visible = false
     updateEverything()
 
 }
@@ -308,8 +403,9 @@ function clear_part(i){
 function updateSelections() {
     let item_selectors = document.querySelectorAll(".item_s")
     item_selectors.forEach(it => {
-        if(layer_selections[it.dataset.partId+'']){
-            if(layer_selections[it.dataset.partId+''][0]+"" == it.dataset.itemId){
+        const item_partId = it.dataset.partId+''
+        if(layer_selections[item_partId]){
+            if(layer_selections[item_partId].ItemID+"" == it.dataset.itemId && layer_selections[item_partId].Visible){
                 it.classList.add("selected_item")
             } else {
                 it.classList.remove("selected_item")
@@ -319,12 +415,31 @@ function updateSelections() {
 
     let color_item_selectors = document.querySelectorAll(".color_selector_item")
     color_item_selectors.forEach(it => {
-        if(layer_selections[it.dataset.partId+'']){
-            if(layer_selections[it.dataset.partId+''][0]+"" == it.dataset.itemId && layer_selections[it.dataset.partId+''][2]+"" == it.dataset.variantColor){
+        const item_partId = it.dataset.partId+''
+        if(layer_selections[item_partId]){
+            if(layer_selections[item_partId].ItemID+"" == it.dataset.itemId && layer_selections[item_partId].VariantColor+"" == it.dataset.variantColor && layer_selections[item_partId].Visible){
                 it.classList.add("color_selector_item_selected")
             } else {
                 it.classList.remove("color_selector_item_selected")
             }
+        }
+    });
+
+    let tint_control_selectors = document.querySelectorAll(".part-tint-control")
+    tint_control_selectors.forEach(it => {
+        const item_partId = it.dataset.partId+''
+        if(layer_selections[item_partId]){
+            const tint_data = layer_selections[item_partId].TintColor
+            it.value = rgbToHex(tint_data[0],tint_data[1],tint_data[2])
+        }
+    });
+
+    let tint_enable_selectors = document.querySelectorAll(".part-tint-enable")
+    tint_enable_selectors.forEach(it => {
+        const item_partId = it.dataset.partId+''
+        if(layer_selections[item_partId]){
+            const tint_data = layer_selections[item_partId].TintColor
+            it.checked = layer_selections[item_partId].EnableTint
         }
     });
 
@@ -386,6 +501,15 @@ function downloadCanvas() {
     })
 }
 
+function updateTintControl(c) {
+    console.log(c.type)
+    console.log(c.checked)
+    if(c.type == 'checkbox'){
+        layer_selections[c.dataset.partId+''].EnableTint = c.checked
+    }
+    //console.log(hex_to_RGB(c.value))
+    updateEverything()
+}
 /*
 
 Part
