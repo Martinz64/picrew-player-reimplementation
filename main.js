@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         for (let j = 0; j < part_data.items.length; j++) {
             const item_data = part_data.items[j];
             let variantId = item_data.itmId;
-            let basedir = pad(j,4) + '-' + item_data.itmId;
+            let basedir = pad(j+1,4) + '-' + item_data.itmId;
             
             
             if(id == 204183){
@@ -85,9 +85,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                         })
                     }
                     variant_d = variants.find(e => e.VariantID == variant_id)
+
+                    let split_url = variants_imgdata[layerId][variant_id].url.split("/")
+                    let url_fname = split_url[split_url.length - 1]
                     variant_d.Layers.push({
                         zIndex: cf.lyrList[layerId],
-                        url: variants_imgdata[layerId][variant_id].url.match(/i_.*\.(?:png|jpg)/)+""
+                        url: url_fname
                     })
                 })
             })
@@ -226,7 +229,11 @@ async function render(){
             })
         } else {
             vari.Layers.forEach(l => {
-                layer_tint_data[l.zIndex] = [false, ...variantID.TintColor]
+                if(variantID.TintColor){
+                    layer_tint_data[l.zIndex] = [false, ...variantID.TintColor]
+                } else {
+                    layer_tint_data[l.zIndex] = [false, 0,0,0]
+                }
             })
         }
         /*part.Layers.forEach(lyr => {
@@ -235,6 +242,8 @@ async function render(){
         
         
     }
+
+    console.log(layers.length)
 
     /* Cache all images */
 
@@ -430,6 +439,7 @@ function updateSelections() {
         const item_partId = it.dataset.partId+''
         if(layer_selections[item_partId]){
             const tint_data = layer_selections[item_partId].TintColor
+            console.log(tint_data)
             it.value = rgbToHex(tint_data[0],tint_data[1],tint_data[2])
         }
     });
