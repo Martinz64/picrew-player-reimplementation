@@ -3,6 +3,10 @@
     padding:0px;
 }
 
+body{
+    overflow: hidden;
+}
+
 #htmladd{
     display:flex;
     flex-direction: column;
@@ -66,7 +70,9 @@
 
 canvas{
     /*position: fixed;*/
-    width:300px;
+    max-width: 300px;
+    max-height: 100vh;
+    
     background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, transparent 25%);
     background-size: 25px 25px;
     background-position: 0 0, 0 0, -12.5px -12.5px, 12.5px 12.5px;
@@ -78,6 +84,7 @@ canvas{
     align-self: flex-start;
     flex-direction: column;
     width: 100vw;
+    flex: 0 0 auto;
 }
 .item_s > .item-thumbnail {
     width: 60px;
@@ -114,7 +121,8 @@ canvas{
     margin-left: 1em;
 }
 .selector-area{
-    height: calc(100vh - var(--computed-height));
+    /*height: calc(100vh - var(--computed-height));*/
+    flex: 1 1 auto;
     overflow-y: scroll;
 }
 
@@ -125,6 +133,7 @@ canvas{
     display: flex;
     flex-direction: column;
     align-items: center;
+    height:100vh;
 }
 
 .item_s.selected_item.has-color-picker > .item-thumbnail {
@@ -157,12 +166,20 @@ canvas{
     align-items: center;
 }
 
-@media screen and (min-width:700px) {
-    .wrapper{
-        flex-direction: row;
+body.horizontal .wrapper{
+    flex-direction: row;
+}
+body.horizontal .viewer-area{
+    width: auto;
+}
+body.horizontal .selector-area{
+    height: 100vh;
+}
 
-    }
-    .selector-area{
-        height: 100vh;
-    }
+body.small-preview canvas{
+    width:150px;
+}
+
+button#preview-size-button {
+    padding: 0 0.5em;
 }

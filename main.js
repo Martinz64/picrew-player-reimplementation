@@ -16,6 +16,8 @@ const data_directory = "data/"
 let enable_tinting = false
 let img_cache = {};
 
+let part_item_offset = 1
+let item_item_offset = 1
 
 let parameters = window.location.search.replace("?","").split("&")
 parameters.forEach(parameter => {
@@ -27,7 +29,15 @@ parameters.forEach(parameter => {
     if(name == "enable-tinting" && value == 1){
         enable_tinting = true 
     }
+    if(name == "compat-mode"){
+        if(value == "old1"){
+            item_item_offset = 0
+        }
+    }
 })
+
+console.log(part_item_offset,item_item_offset)
+
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -48,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const part_data = cf_parts[i];
         let name = part_data.pNm
         let id = part_data.pId
-        let dirname = pad(i+1,4) + "-" + id + "-" + part_data.pNm
+        let dirname = pad(i+part_item_offset,4) + "-" + id + "-" + part_data.pNm
         let thumbnailURL = part_data.thumbUrl ? part_data.thumbUrl.match(/p_.*\.(?:png|jpg)/)+"" : ""
         let coveredLayers = part_data.lyrs
         let colorProfiles = cf.cpList[part_data.cpId]
@@ -57,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         for (let j = 0; j < part_data.items.length; j++) {
             const item_data = part_data.items[j];
             let variantId = item_data.itmId;
-            let basedir = pad(j+1,4) + '-' + item_data.itmId;
+            let basedir = pad(j+item_item_offset,4) + '-' + item_data.itmId;
             
             
             if(id == 204183){
@@ -81,6 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         variants.push({
                             VariantID: parseInt(variant_id),
                             VariantColor: variant_color,
+                            VariantColorID: variant_id,
                             Layers: []
                         })
                     }
@@ -151,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 htmladd += "<div class='color-panel'>"
                 for (let k = 0; k < item.Variants.length; k++) {
                     const variant = item.Variants[k];
-                    htmladd += "<div data-part-id='" + part.ID + "' data-item-id='" + item.ItemID + "' data-variant-id='" + variant.VariantID + "' class='color_selector_item' style='background-color:" + variant.VariantColor + "' data-variant-color='" + variant.VariantColor + "' onclick='update_canvas(this)'></div>"
+                    htmladd += "<div data-part-id='" + part.ID + "' data-item-id='" + item.ItemID + "' data-variant-id='" + variant.VariantID + "' class='color_selector_item' style='background-color:" + variant.VariantColor + "' data-variant-color-id='" + variant.VariantColorID + "' onclick='update_canvas(this)'></div>"
                 }
                 htmladd += "</div>"
             }
@@ -179,6 +190,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ItemID: item.ItemID,
                     VariantID: item.Variants[0].VariantID,
                     VariantColor: item.Variants[0].VariantColor,
+                    VariantColorID: item.Variants[0].VariantColorID,
                     EnableTint: false,
                     TintColor: [0, 0, 0]
                 }
@@ -217,8 +229,8 @@ async function render(){
         
         let item = part.Items.find(e => e.ItemID == variantID.ItemID)
         let vari = item.Variants.find(e => e.VariantID == variantID.VariantID)
-        if(variantID.VariantColor){
-            vari = item.Variants.find(e => e.VariantColor == variantID.VariantColor) // variantID[2] is color
+        if(variantID.VariantColorID){
+            vari = item.Variants.find(e => e.VariantColorID == variantID.VariantColorID) // variantID[2] is color
         }
         vari.Layers.forEach(l => {
             layers[l.zIndex] = data_directory + base_id + "/" + part.BaseDirectory + "/" + item.BaseDirectory + "/" + l.url
@@ -378,17 +390,18 @@ function update_canvas(i){
 
             layer_selections[pID+""].ItemID = item.ItemID
             layer_selections[pID+""].VariantID = item.Variants[0].VariantID
-            if(typeof layer_selections[pID+""].VariantColor == 'undefined'){
-                layer_selections[pID+""].VariantColor = item.Variants[0].VariantColor
+            if(typeof layer_selections[pID+""].VariantColorID == 'undefined'){
+                layer_selections[pID+""].VariantColorID = item.Variants[0].VariantColorID
             }
             layer_selections[pID+""].Visible = true
             item.Variants.forEach(variant => {
-                if(i.dataset.variantColor){
-                    if(variant.VariantColor == i.dataset.variantColor){
+                if(i.dataset.variantColorId){
+                    if(variant.VariantColorID == i.dataset.variantColorId){
                         //layer_selections[pID+""] = [item.ItemID,variant.VariantID,variant.VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
                         layer_selections[pID+""].ItemID = item.ItemID
                         layer_selections[pID+""].VariantID = variant.VariantID 
                         layer_selections[pID+""].VariantColor = variant.VariantColor 
+                        layer_selections[pID+""].VariantColorID = variant.VariantColorID
                         layer_selections[pID+""].Visible = true
                         
                     }
@@ -426,7 +439,7 @@ function updateSelections() {
     color_item_selectors.forEach(it => {
         const item_partId = it.dataset.partId+''
         if(layer_selections[item_partId]){
-            if(layer_selections[item_partId].ItemID+"" == it.dataset.itemId && layer_selections[item_partId].VariantColor+"" == it.dataset.variantColor && layer_selections[item_partId].Visible){
+            if(layer_selections[item_partId].ItemID+"" == it.dataset.itemId && layer_selections[item_partId].VariantColorID+"" == it.dataset.variantColorId && layer_selections[item_partId].Visible){
                 it.classList.add("color_selector_item_selected")
             } else {
                 it.classList.remove("color_selector_item_selected")
@@ -461,6 +474,7 @@ function updateEverything(){
     updateSelections()
     updateTextarea()
     saveToLocalStorage()
+    updateViewerSize()
 }
 
 function updateTextarea() {
@@ -489,12 +503,45 @@ function clearLocalStorage() {
 }
 
 function resizeSelectorArea() {
-    let height = document.getElementById("viewer-area").getClientRects()[0].height
+    let height = document.body.clientHeight
+    let width = document.body.clientWidth
+    let horizontal = width > height
+    console.log(width,height)
+    
+    if(horizontal){
+        document.body.classList.add("horizontal")
+    } else {
+        document.body.classList.remove("horizontal")
+    }
+    
+    
+
+
+    //let height = document.getElementById("viewer-area").getClientRects()[0].height
     //document.getElementById("selector-area").style = "height:calc( 100vh - " + height + "px);"
-    document.getElementById("selector-area").style = "--computed-height:" + height + "px;"
+    //document.getElementById("selector-area").style = "--computed-height:" + height + "px;"
     //document.getElementById("selector-area").dataset.computedHeight = height
     
 }
+
+function updateViewerSize(){
+    /*if(localStorage.smallPreviewSize === undefined){
+        localStorage.smallPreviewSize = false
+    }*/
+    let toggle_button = document.getElementById("preview-size-button")
+    if(localStorage.previewSize == "small"){
+        document.body.classList.add("small-preview")
+        toggle_button.innerText = "+"
+    } else {
+        document.body.classList.remove("small-preview")
+        toggle_button.innerText = "-"
+    }
+}
+function toggleViewerSize(){
+    localStorage.previewSize = (!(localStorage.previewSize == "small"))?"small":"big"
+    updateViewerSize()
+}
+
 function downloadURI(uri, name) 
 {
     var link = document.createElement("a");
