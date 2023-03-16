@@ -5,6 +5,7 @@
 
 body{
     overflow: hidden;
+    background-color: #323232;
 }
 
 #htmladd{
@@ -20,38 +21,53 @@ body{
     flex-direction: column;
     box-shadow: 0px 2px 5px rgb(0 0 0 / 50%);
     border-radius: 4px;
+    background-color: #404040;
+
+    display: flex;
+        align-items: flex-start;
+    gap: .5rem;
 }
-.part_s > img{
-    height:60px;
+
+.item_list{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    /*gap: .5rem;*/
 }
+
 
 .item_s{
     display: flex;
-    padding: 10px;
-    margin: 10px;
-    border: 1px solid #000;
+    padding: .5rem;
+    /*margin: 1rem;*/
+    border: 2px solid transparent;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     flex-direction: row;
     cursor: pointer;
+    border-radius: 4px;
+
+    width: 60px;
+    height: 60px;
+    
+    transition: all cubic-bezier(0.075, 0.82, 0.165, 1) .5s;
 }
 
-.selected_item{
+.item_s:hover{
+    background-color: rgb(255 255 255 / 50%);
+}
+
+.item_s.selected_item{
+
+    border: 2px solid #444;
     background-color: #dcdcdc;
     box-shadow: 0 2px 4px rgb(0 0 0 / 50%);
-    border-radius: 5px;
 }
 
-.color_selector_item{
-    width:50px;
-    height:50px;
-    border: 3px solid white;
-
-}
-
-.color_selector_item_selected{
-    border: 3px solid #000;
+.item_s img{
+    max-height: 100%;
+    max-width: 100%;
 }
 
 .color-panel{
@@ -59,9 +75,25 @@ body{
     /*transform: scaleX(0);*/
     opacity: 0;
     transition: all ease .5s;
+    
+    display: flex;
 }
 
-.item_s.selected_item > .color-panel{
+.color_selector_item{
+    width:1em;
+    height:1em;
+    border: 3px solid transparent;
+    cursor: pointer;
+
+}
+
+.color_selector_item_selected{
+    border: 3px solid #333;
+}
+
+
+
+/*.item_s.selected_item > */.color-panel{
     display: flex;
     /*transform: scaleX(1);*/
     flex-wrap: wrap;
@@ -72,6 +104,7 @@ canvas{
     /*position: fixed;*/
     max-width: 300px;
     max-height: 100vh;
+    background-color: white;
     
     background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, transparent 25%);
     background-size: 25px 25px;
@@ -85,10 +118,11 @@ canvas{
     flex-direction: column;
     width: 100vw;
     flex: 0 0 auto;
+    gap: .5rem;
 }
 .item_s > .item-thumbnail {
-    width: 60px;
-    height: 60px;
+    /*width: 60px;
+    height: 60px;*/
     display: flex;
     align-items: center;
 }
@@ -97,17 +131,13 @@ canvas{
     max-height: 100%;
 }
 
-.item_list{
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-}
-.part-title > img {
-    width: 60px;
-    height: 60px;
+
+.part-title img {
+    width: 2rem;
+    height: 2rem;
 }
 
-.part-title {
+.card {
     display: flex;
     align-items: center;
     padding: 0.5em;
@@ -136,18 +166,13 @@ canvas{
     height:100vh;
 }
 
-.item_s.selected_item.has-color-picker > .item-thumbnail {
-    border: 2px solid;
-    /*padding: 0.5em;*/
-    border-radius: 4px;
-    margin: 0.25em;
-    float: left;
-}
-.part-title-area {
+
+
+.part-header {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    align-items: center;
+    gap: .5em;
 }
 
 .part-tint-options {

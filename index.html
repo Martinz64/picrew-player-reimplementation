@@ -9,8 +9,14 @@
     <link rel="stylesheet" href="switch.css">
 </head>
 <body onresize="resizeSelectorArea()" onload="resizeSelectorArea()">
+    
     <div class="wrapper">
+        
         <div class="viewer-area" id="viewer-area">
+            <header class="card">
+                <h1>Picrew Player</h1>
+                
+            </header>
             <canvas id="viewer" height="600" width="600"></canvas>
             <div class="toolbar">
                 <button onclick="downloadCanvas()">Download</button>

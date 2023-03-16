@@ -129,13 +129,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         htmladd += "<div class='part_s'>"
-        htmladd += "<div class='part-title-area'>"
-        htmladd += "<div class='part-title'>"
+
+        //Build the header 
+        htmladd += "<div class='part-header'>"
+        
+        //Title bar with icon and clear button
+        htmladd += "<div class='card part-title'>"
         htmladd += "<img src='" + data_directory + base_id+ "/" + part.BaseDirectory + "/" + part.ThumbnailFilename + "'>"
         htmladd += "<h3>" + part.Name + "</h3>"
-        htmladd += "<button class='clear-part' data-part-id='" + part.ID + "' onclick='clear_part(this)'>Clear</button>"
-
+        //htmladd += "<button class='clear-part' data-part-id='" + part.ID + "' onclick='clear_part(this)'>Clear</button>"
         htmladd += "</div>"
+        
+        //Color selector if available
+        const firstItem = part.Items[0]
+        if(firstItem.Variants.length > 1){
+            htmladd += "<div class='card color-panel'>"
+            for (let k = 0; k < firstItem.Variants.length; k++) {
+                const variant = firstItem.Variants[k];
+                htmladd += "<div data-part-id='" + part.ID + "' data-variant-id='" + variant.VariantID + "' class='color_selector_item' style='background-color:" + variant.VariantColor + "' data-variant-color-id='" + variant.VariantColorID + "' onclick='select_color(this)'></div>"
+            }
+            htmladd += "</div>"
+        }
 
         if(enable_tinting){
             htmladd += "<div class='part-tint-options'>"
@@ -149,23 +163,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         htmladd += "</div>"
 
+        
+
         htmladd += "<div class='item_list'>"
+
+        htmladd += "<div class='item_s'>"
+        htmladd += "    <button class='clear-part' data-part-id='" + part.ID + "' onclick='clear_part(this)'>Clear</button>"
+        htmladd += "</div>"
+
+
         for (let j = 0; j < part.Items.length; j++) {
             const item = part.Items[j];
             const hasColorPicker = item.Variants.length > 1
             htmladd += "<div class='item_s " + ( hasColorPicker ? "has-color-picker" : "") + "' data-part-id='" + part.ID + "' data-item-id='" + item.ItemID + "' onclick='update_canvas(this)'>"
-            htmladd += "<div class='item-thumbnail'>"
+            //htmladd += "<div class='item-thumbnail'>"
             htmladd += "<img src='" + data_directory + base_id+ "/" + part.BaseDirectory + "/" + item.BaseDirectory + "/" + item.ThumbnailFilename + "' > " //data-part-id='" + part.ID + "' data-item-id='" + item.ItemID + "' onclick='update_canvas(this)'>"
-            htmladd += "</div>"
+            //htmladd += "</div>"
 
-            if(item.Variants.length > 1){
+            /*if(item.Variants.length > 1){
                 htmladd += "<div class='color-panel'>"
                 for (let k = 0; k < item.Variants.length; k++) {
                     const variant = item.Variants[k];
                     htmladd += "<div data-part-id='" + part.ID + "' data-item-id='" + item.ItemID + "' data-variant-id='" + variant.VariantID + "' class='color_selector_item' style='background-color:" + variant.VariantColor + "' data-variant-color-id='" + variant.VariantColorID + "' onclick='update_canvas(this)'></div>"
                 }
                 htmladd += "</div>"
-            }
+            }*/
             htmladd += "</div>"
 
         }
@@ -415,6 +437,58 @@ function update_canvas(i){
     updateEverything()
 }
 
+function select_color(i){
+    const pID = i.dataset.partId
+    console.log(i.dataset.partId,i.dataset.itemId)
+
+    const current_selection = layer_selections[pID+""]
+
+    const part = parts.find(e => e.PartID == pID)
+    const item = part.Items.find(e => e.ItemID == current_selection.ItemID)
+
+    console.log(item)
+    const selectedVariantId = i.dataset.variantId
+
+    layer_selections[pID+""].VariantColorID = selectedVariantId
+
+    console.log(layer_selections[pID])
+    console.log(selectedVariantId)
+
+
+    /*parts.find(e => e.PartID == pID).Items.forEach(item => {
+        if(item.ItemID == iID){
+            if(typeof layer_selections[pID+""] == 'undefined'){
+                layer_selections[pID+""] = {}
+            }
+
+            layer_selections[pID+""].ItemID = item.ItemID
+            layer_selections[pID+""].VariantID = item.Variants[0].VariantID
+            if(typeof layer_selections[pID+""].VariantColorID == 'undefined'){
+                layer_selections[pID+""].VariantColorID = item.Variants[0].VariantColorID
+            }
+            layer_selections[pID+""].Visible = true
+            item.Variants.forEach(variant => {
+                if(i.dataset.variantColorId){
+                    if(variant.VariantColorID == i.dataset.variantColorId){
+                        //layer_selections[pID+""] = [item.ItemID,variant.VariantID,variant.VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
+                        layer_selections[pID+""].ItemID = item.ItemID
+                        layer_selections[pID+""].VariantID = variant.VariantID 
+                        layer_selections[pID+""].VariantColor = variant.VariantColor 
+                        layer_selections[pID+""].VariantColorID = variant.VariantColorID
+                        layer_selections[pID+""].Visible = true
+                        
+                    }
+                }
+            })
+            
+            
+            //console.log(layer_selections[part.ID])
+        }
+    });*/
+    updateEverything()
+}
+
+
 function clear_part(i){
     const pID = i.dataset.partId
     layer_selections[pID+""].Visible = false
@@ -439,7 +513,7 @@ function updateSelections() {
     color_item_selectors.forEach(it => {
         const item_partId = it.dataset.partId+''
         if(layer_selections[item_partId]){
-            if(layer_selections[item_partId].ItemID+"" == it.dataset.itemId && layer_selections[item_partId].VariantColorID+"" == it.dataset.variantColorId && layer_selections[item_partId].Visible){
+            if(layer_selections[item_partId].VariantColorID+"" == it.dataset.variantColorId && layer_selections[item_partId].Visible){
                 it.classList.add("color_selector_item_selected")
             } else {
                 it.classList.remove("color_selector_item_selected")
