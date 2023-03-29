@@ -3,9 +3,14 @@
     padding:0px;
 }
 
+:root{
+    --part-section-color: #404040;
+}
+
 body{
     overflow: hidden;
     background-color: #323232;
+    color: white;
 }
 
 #htmladd{
@@ -21,10 +26,10 @@ body{
     flex-direction: column;
     box-shadow: 0px 2px 5px rgb(0 0 0 / 50%);
     border-radius: 4px;
-    background-color: #404040;
+    background-color: var(--part-section-color);
 
     display: flex;
-        align-items: flex-start;
+    align-items: flex-start;
     gap: .5rem;
 }
 
@@ -207,4 +212,43 @@ body.small-preview canvas{
 
 button#preview-size-button {
     padding: 0 0.5em;
+}
+
+.alert_wrapper{
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: rgba(0,0,0,0.5);
+    /*display: flex;*/
+    display: none;
+    align-items: start;
+    justify-content: center;
+}
+
+body.show-alert .alert_wrapper{
+    display: flex;
+}
+
+.alert{
+    background-color:var(--part-section-color);
+    max-width: 600px;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 8px;
+    border: 1px solid;
+    display: none;
+}
+
+body.compat-error .alert.compat-alert{
+    display: block;
+}
+body.id-error .alert.id-alert{
+    display: block;
+}
+
+code{
+    background-color: rgba(0,0,0,0.5);
+    padding:0.1rem;
 }

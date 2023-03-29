@@ -10,15 +10,17 @@ var color_selections = {};
 
 var parts = [];
 let cf;
-let base_id = 22352
+let base_id = 0
 const data_directory = "data/"
 
 let enable_tinting = false
 let img_cache = {};
 
-let part_item_offset = 1
-let item_item_offset = 1
-let compat_no_names_in_path = false
+let compat_params = {
+    part_item_offset: 1,
+    item_item_offset: 1,
+    compat_no_names_in_path: false
+}
 
 let parameters = window.location.search.replace("?","").split("&")
 parameters.forEach(parameter => {
@@ -32,20 +34,21 @@ parameters.forEach(parameter => {
     }
     if(name == "compat-mode"){
         if(value == "old1"){
-            item_item_offset = 0
+            compat_params.item_item_offset = 0
         }
         if(value == "NO_NAMES_IN_PATH"){
-            compat_no_names_in_path = true
+            compat_params.compat_no_names_in_path = true
         }
     }
 })
 
-console.log(part_item_offset,item_item_offset)
-
-
-
 document.addEventListener("DOMContentLoaded", async () => {
 
+    if(base_id == 0){
+        document.body.classList.add("show-alert")
+        document.body.classList.add("id-error")
+        return
+    }
 
     let cf_req = await fetch( data_directory + base_id + "/cf.json");
     cf = await cf_req.json();
@@ -58,15 +61,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let cf_parts = cf.pList;
 
+    //check compat mode
+    checkCompatibility(cf_parts)
+    
+
     for (let i = 0; i < cf_parts.length; i++) {
         const part_data = cf_parts[i];
         let name = part_data.pNm
         let id = part_data.pId
         
         
-        let dirname = pad(i+part_item_offset,4) + "-" + id + "-" + part_data.pNm
-        if(compat_no_names_in_path){
-            dirname = pad(i+part_item_offset,4) + "-" + id
+        let dirname = pad(i+compat_params.part_item_offset,4) + "-" + id + "-" + part_data.pNm
+        if(compat_params.compat_no_names_in_path){
+            dirname = pad(i+compat_params.part_item_offset,4) + "-" + id
         }
         
         let thumbnailURL = part_data.thumbUrl ? part_data.thumbUrl.match(/p_.*\.(?:png|jpg)/)+"" : ""
@@ -77,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         for (let j = 0; j < part_data.items.length; j++) {
             const item_data = part_data.items[j];
             let variantId = item_data.itmId;
-            let basedir = pad(j+item_item_offset,4) + '-' + item_data.itmId;
+            let basedir = pad(j+compat_params.item_item_offset,4) + '-' + item_data.itmId;
             
             let variants = [];
 
@@ -145,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         //Color selector if available
         const firstItem = part.Items[0]
-        if(firstItem.Variants.length > 1){
+        if(firstItem?.Variants?.length > 1){
             htmladd += "<div class='card color-panel'>"
             for (let k = 0; k < firstItem.Variants.length; k++) {
                 const variant = firstItem.Variants[k];
@@ -228,6 +235,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     //loadFromLocalstorage()
     updateEverything()
 })
+
+function checkCompatibility(cf_parts) {
+    
+    const first_part = cf_parts[0]
+    const first_item = first_part.items[0]
+    const thumbnail_url = (first_item.thumbUrl ? first_item.thumbUrl.match(/\/[a-z]{1,2}_.+\.(?:png|jpg)/)+"" : "").replace("/","")
+    console.log(thumbnail_url)
+    let part_dir = pad(compat_params.part_item_offset,4) + '-' + first_part.pId + "-" + first_part.pNm;
+    if(compat_params.compat_no_names_in_path){
+        part_dir = pad(compat_params.part_item_offset,4) + '-' + first_part.pId;
+    }
+
+    let item_dir = pad(compat_params.item_item_offset,4) + '-' + first_item.itmId;
+    
+    let img_url = data_directory + base_id + "/" + part_dir + "/" + item_dir + "/" + thumbnail_url
+    console.log(img_url)
+    fetch(img_url).then(a=>{
+        //alert(a.status)
+        if(a.status == 404){
+            //alert("compat error") 
+            document.body.classList.add("show-alert")
+            document.body.classList.add("compat-error")
+        }
+    })
+}
 
 async function render(){
     const canvas = document.getElementById("viewer")
@@ -490,7 +522,6 @@ function select_color(i){
     });*/
     updateEverything()
 }
-
 
 function clear_part(i){
     const pID = i.dataset.partId

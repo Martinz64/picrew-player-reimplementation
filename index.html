@@ -32,6 +32,32 @@
             <div id="htmladd"></div>    
         </div>
     </div>
+
+    <div class="alert_wrapper">
+        <div class="alert compat-alert">
+            <h1>Problem while loading</h1>
+            <p>
+                Due to changes on how the picrew backup tool archives files, sometimes enabling compatibility mode is necessary
+            </p>
+            <p>
+                To enable compatibility mode add <code>&compat-mode=old1</code> or <code>&compat-mode=NO_NAMES_IN_PATH</code> to the end of the url
+            </p>
+        </div>
+
+        <div class="alert id-alert">
+            <h1>No ID specified</h1>
+            <!--<p>
+                To load a backup you need to specify its ID in the url
+            </p>-->
+            <p>
+                Backups should be placed in the <code>data</code> directory
+            </p>
+            <p>
+                To load a backup, add <code>?id=&lt;folder name&gt;</code> to the end of the url and replace <code>&lt;folder name&gt;</code> with the id of the backup you placed in the <code>data</code> folder
+            </p>
+        </div>
+    </div>
+    
     <div id="imgcache" style="display:none;"></div>
     <script src="utils.js"></script>
     <script src="main.js"></script>
