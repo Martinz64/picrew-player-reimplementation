@@ -18,6 +18,7 @@ let img_cache = {};
 
 let part_item_offset = 1
 let item_item_offset = 1
+let compat_no_names_in_path = false
 
 let parameters = window.location.search.replace("?","").split("&")
 parameters.forEach(parameter => {
@@ -32,6 +33,9 @@ parameters.forEach(parameter => {
     if(name == "compat-mode"){
         if(value == "old1"){
             item_item_offset = 0
+        }
+        if(value == "NO_NAMES_IN_PATH"){
+            compat_no_names_in_path = true
         }
     }
 })
@@ -58,7 +62,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         const part_data = cf_parts[i];
         let name = part_data.pNm
         let id = part_data.pId
+        
+        
         let dirname = pad(i+part_item_offset,4) + "-" + id + "-" + part_data.pNm
+        if(compat_no_names_in_path){
+            dirname = pad(i+part_item_offset,4) + "-" + id
+        }
+        
         let thumbnailURL = part_data.thumbUrl ? part_data.thumbUrl.match(/p_.*\.(?:png|jpg)/)+"" : ""
         let coveredLayers = part_data.lyrs
         let colorProfiles = cf.cpList[part_data.cpId]
@@ -68,13 +78,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             const item_data = part_data.items[j];
             let variantId = item_data.itmId;
             let basedir = pad(j+item_item_offset,4) + '-' + item_data.itmId;
-            
-            
-            if(id == 204183){
-                console.log(id,img.lst[item_data.itmId])
-                let aa = img.lst[item_data.itmId]
-                console.log(aa[Object.keys(aa)[0]])
-            }
             
             let variants = [];
 
