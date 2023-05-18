@@ -224,7 +224,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                     VariantColor: item.Variants[0].VariantColor,
                     VariantColorID: item.Variants[0].VariantColorID,
                     EnableTint: false,
-                    TintColor: [0, 0, 0]
+                    TintColor: [0, 0, 0],
+                    Offset: [0, 0],
+                    Rotation: 0,
+                    Scale: 1
                 }
                 //console.log(layer_selections[part.ID])
             }
@@ -268,8 +271,15 @@ async function render(){
 
 
     let layers = [];
+
+    let layers_scale = [];
+    let layers_offset = [];
+    let layers_rotation = [];
     for (let i = 0; i < 100; i++) {
-        layers.push("")    
+        layers.push("") 
+        layers_scale.push(1)
+        layers_offset.push([0,0])
+        layers_rotation.push(0)
     }
     let layer_tint_data = [];
     for (let i = 0; i < 100; i++) {
@@ -291,6 +301,9 @@ async function render(){
         }
         vari.Layers.forEach(l => {
             layers[l.zIndex] = data_directory + base_id + "/" + part.BaseDirectory + "/" + item.BaseDirectory + "/" + l.url
+            layers_offset[l.zIndex] = variantID.Offset
+            layers_rotation[l.zIndex] = variantID.Rotation
+            layers_scale[l.zIndex] = variantID.Scale
         })
         if(enable_tinting){
             vari.Layers.forEach(l => {
@@ -377,61 +390,40 @@ async function render(){
         const url = layers[i];
         if(url != "" && url){
             const tintData = layer_tint_data[i]
+            const offset = layers_offset[i]
+            const rotation = layers_rotation[i]
             console.log(tintData)
 
             if(!tintData[0]){
                 let image = document.getElementById(btoa(encodeURIComponent(url)))
-                /*var rgbks = generateRGBKs( image );
-                var tintImg = generateTintImage( image, rgbks, 200, 50, 100 );*/
-                ctx.drawImage(image,0,0)
+                
+                //ctx.drawImage(image,0,0)
+
+                
+
+                var tr_x = canvas.width / 2 + offset[0];
+                var tr_y = canvas.height / 2 + offset[1];
+                
+                var angle = rotation * Math.PI / 180; // Convertir a radianes
+
+                ctx.save()
+                ctx.translate(tr_x,tr_y)
+                ctx.rotate(angle)
+                //ctx.drawImage(image,0,0,scaledWidth,scaledHeight);
+                ctx.drawImage(image,-image.width/2,-image.height/2);
+                //ctx.rotate(-rotation)
+                //ctx.translate(-tr_x,-tr_y)
+                ctx.restore()
+
             } else {
                 const tint_hash = btoa(encodeURIComponent(url)+tintData[1]+tintData[2]+tintData[3])
                 let image = document.getElementById(tint_hash)
-                /*var rgbks = generateRGBKs( image );
-                var tintImg = generateTintImage( image, rgbks, tintData[1], tintData[2], tintData[3]);
-                //var tintImg = multiply(image,"#990");
-
-                tintImg.toBlob(b => {
-                    let blobURL = URL.createObjectURL(b)
-                    
-                })
-                */
-               
-
                 ctx.drawImage(image,0,0)
             }
-            /*await new Promise(function(done){
-                if(document.getElementById(btoa(encodeURIComponent(url)))==null){
-                    //let image = new Image();
-                    let image = document.createElement("img")
-                    image.onload = async () => {
-                        ctx.drawImage(image,0,0);
-                        img_cache[url] = true
-                        image.id = btoa(encodeURIComponent(url))
-                        document.getElementById("imgcache").appendChild(image)
-                        done()
-                    }
-                    image.src = url
-                } else {
-                    
-                    done()
-                }
-                //console.log(url)
-            })*/
-        }
-    }
-
-    for (const key in layer_selections) {
-        if (Object.hasOwnProperty.call(layer_selections, key)) {
             
         }
     }
-    
-    /*var image = new Image();
-    image.onload = () => {
-        ctx.drawImage(image,0,0);
-    }
-    image.src = "22352/0002-47847-顔２(ほくろ)/0000-204160/i_hXYepKTMoNCcrKFo.png"*/
+
 }
 
 function update_canvas(i){

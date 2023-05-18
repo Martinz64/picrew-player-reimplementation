@@ -16,11 +16,12 @@ body{
 #htmladd{
     display:flex;
     flex-direction: column;
+    gap: .5em;
+    padding: .5em;
 }
 
 .part_s{
-    padding: 10px;
-    margin: 10px;
+    padding: .5rem;
     border: 1px solid #000;
     align-items: center;
     flex-direction: column;
