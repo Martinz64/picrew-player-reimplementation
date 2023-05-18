@@ -8,7 +8,9 @@ Layer id:
 var color_selections = {};
 
 
+var item_defaults = {}
 var parts = [];
+var numLayers = 100;
 let cf;
 let base_id = 0
 const data_directory = "data/"
@@ -19,7 +21,8 @@ let img_cache = {};
 let compat_params = {
     part_item_offset: 1,
     item_item_offset: 1,
-    compat_no_names_in_path: false
+    compat_no_names_in_path: false,
+    load_json: null
 }
 
 let parameters = window.location.search.replace("?","").split("&")
@@ -27,7 +30,8 @@ parameters.forEach(parameter => {
     let name = parameter.split("=")[0]
     let value = parameter.split("=")[1]
     if(name == "id"){
-        base_id = parseInt(value)
+        //base_id = parseInt(value)
+        base_id = value
     }
     if(name == "enable-tinting" && value == 1){
         enable_tinting = true 
@@ -40,16 +44,12 @@ parameters.forEach(parameter => {
             compat_params.compat_no_names_in_path = true
         }
     }
+    if(name == "load-json"){
+        compat_params.load_json = value
+    }
 })
 
-document.addEventListener("DOMContentLoaded", async () => {
-
-    if(base_id == 0){
-        document.body.classList.add("show-alert")
-        document.body.classList.add("id-error")
-        return
-    }
-
+async function load_picrew_parts(){
     let cf_req = await fetch( data_directory + base_id + "/cf.json");
     cf = await cf_req.json();
     console.log(cf)
@@ -79,7 +79,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         let thumbnailURL = part_data.thumbUrl ? part_data.thumbUrl.match(/p_.*\.(?:png|jpg)/)+"" : ""
         let coveredLayers = part_data.lyrs
         let colorProfiles = cf.cpList[part_data.cpId]
-        
+
+        let zeroItemId = cf.zeroConf[id+""].itmId
+        item_defaults[id+""] = zeroItemId
+
         let items = [];
         for (let j = 0; j < part_data.items.length; j++) {
             const item_data = part_data.items[j];
@@ -133,6 +136,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             Items: items
         })
     }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+    if(!base_id){
+        document.body.classList.add("show-alert")
+        document.body.classList.add("id-error")
+        return
+    }
+
+    if(!compat_params.load_json){
+        await load_picrew_parts()
+    } else {
+        let processed_req = await fetch( data_directory + base_id + "/"+compat_params.load_json);
+        processed = await processed_req.json();
+        console.log(processed)
+        parts = processed.Parts
+        item_defaults = processed.ItemDefaults
+        numLayers = processed.NumLayers
+    }
+
+    
     console.log(parts)
 
     let htmladd = ""
@@ -210,19 +235,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         const part = parts[i];
         //let defaultURL = base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  part.Items[0].VariantFilenames[0]
         //layer_selections[part.ID] = defaultURL
-        let zeroItemId = cf.zeroConf[part.ID+""].itmId
+        //let zeroItemId = cf.zeroConf[part.ID+""].itmId
+        const defaultItemId = item_defaults[part.ID+""]
+
+        layer_selections[part.ID+""] = {
+            Visible: false,
+            ItemID: part.Items[0].ItemID,
+            //VariantID: part.Items[0].Variants[0].VariantID,
+            //VariantColor: part.Items[0].Variants[0].VariantColor,
+            //VariantColorID: part.Items[0].Variants[0].VariantColorID,
+            VariantID: 0,
+            VariantColor: 0,
+            VariantColorID:0,
+            EnableTint: false,
+            TintColor: [0, 0, 0],
+            Offset: [0, 0],
+            Rotation: 0,
+            Scale: 1
+        }
+
         part.Items.forEach(item => {
-            if(item.ItemID == zeroItemId){
+            if(item.ItemID == defaultItemId){
+                console.log(item.ItemID,item)
                 item.Variants.forEach(variant => {
 
                 })
                 //layer_selections[part.ID+""] = [item.ItemID,item.Variants[0].VariantID,item.Variants[0].VariantColor] //base_id + "/" + part.BaseDirectory + "/" + part.Items[0].BaseDirectory + "/" +  item.VariantFilenames[0]
+                const default_variant_id = item.Variants[0]?.VariantID?? 0
+                const default_variant_color = item.Variants[0]?.VariantColor?? 0
+
+                const default_variant_color_id = item.Variants[0]?.VariantColorID?? 0
                 layer_selections[part.ID+""] = {
                     Visible: true,
                     ItemID: item.ItemID,
-                    VariantID: item.Variants[0].VariantID,
-                    VariantColor: item.Variants[0].VariantColor,
-                    VariantColorID: item.Variants[0].VariantColorID,
+                    VariantID: default_variant_id,
+                    VariantColor: default_variant_color,
+                    VariantColorID: default_variant_color_id,
                     EnableTint: false,
                     TintColor: [0, 0, 0],
                     Offset: [0, 0],
@@ -275,16 +323,18 @@ async function render(){
     let layers_scale = [];
     let layers_offset = [];
     let layers_rotation = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < numLayers; i++) {
         layers.push("") 
         layers_scale.push(1)
         layers_offset.push([0,0])
         layers_rotation.push(0)
     }
     let layer_tint_data = [];
-    for (let i = 0; i < 100; i++) {
-        layer_tint_data.push([])
+    for (let i = 0; i < numLayers; i++) {
+        layer_tint_data.push([false])
     }
+
+    
 
 
     for (let i = 0; i < parts.length; i++) {
@@ -299,6 +349,9 @@ async function render(){
         if(variantID.VariantColorID){
             vari = item.Variants.find(e => e.VariantColorID == variantID.VariantColorID) // variantID[2] is color
         }
+
+        if(!vari) continue;
+
         vari.Layers.forEach(l => {
             layers[l.zIndex] = data_directory + base_id + "/" + part.BaseDirectory + "/" + item.BaseDirectory + "/" + l.url
             layers_offset[l.zIndex] = variantID.Offset
@@ -324,7 +377,7 @@ async function render(){
         
         
     }
-
+    console.log(layers)
     console.log(layers.length)
 
     /* Cache all images */
@@ -438,9 +491,10 @@ function update_canvas(i){
             }
 
             layer_selections[pID+""].ItemID = item.ItemID
-            layer_selections[pID+""].VariantID = item.Variants[0].VariantID
+            layer_selections[pID+""].VariantID = item.Variants[0]?.VariantID ?? 0
             if(typeof layer_selections[pID+""].VariantColorID == 'undefined'){
-                layer_selections[pID+""].VariantColorID = item.Variants[0].VariantColorID
+                console.log(item.Variants.length)
+                layer_selections[pID+""].VariantColorID = item.Variants.length ? item.Variants[0].VariantColorID : 0
             }
             layer_selections[pID+""].Visible = true
             item.Variants.forEach(variant => {
