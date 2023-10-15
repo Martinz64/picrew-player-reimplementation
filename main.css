@@ -20,14 +20,19 @@ body{
     padding: .5em;
 }
 
-.part_s{
+.panel{    
     padding: .5rem;
     border: 1px solid #000;
-    align-items: center;
-    flex-direction: column;
     box-shadow: 0px 2px 5px rgb(0 0 0 / 50%);
     border-radius: 4px;
     background-color: var(--part-section-color);
+}
+
+.part_s{
+
+
+    align-items: center;
+    flex-direction: column;
 
     display: flex;
     align-items: flex-start;
@@ -47,6 +52,7 @@ body{
     padding: .5rem;
     /*margin: 1rem;*/
     border: 2px solid transparent;
+    
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
@@ -58,6 +64,8 @@ body{
     height: 60px;
     
     transition: all cubic-bezier(0.075, 0.82, 0.165, 1) .5s;
+    box-shadow: none;
+    background-color: transparent;
 }
 
 .item_s:hover{
@@ -106,23 +114,11 @@ body{
     opacity: 1;
 }
 
-canvas{
-    /*position: fixed;*/
-    max-width: 300px;
-    max-height: 100vh;
-    background-color: white;
-    
-    background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, transparent 25%);
-    background-size: 25px 25px;
-    background-position: 0 0, 0 0, -12.5px -12.5px, 12.5px 12.5px;
-    align-self: center;
-}
-
 .viewer-area{
     display: flex;
-    align-self: flex-start;
+    /*align-self: flex-start;*/
     flex-direction: column;
-    width: 100vw;
+    /*width: 100vw;*/
     flex: 0 0 auto;
     gap: .5rem;
 }
@@ -202,18 +198,13 @@ body.horizontal .wrapper{
 }
 body.horizontal .viewer-area{
     width: auto;
+    align-self: flex-start;
 }
 body.horizontal .selector-area{
     height: 100vh;
 }
 
-body.small-preview canvas{
-    width:150px;
-}
 
-button#preview-size-button {
-    padding: 0 0.5em;
-}
 
 .alert_wrapper{
     position: absolute;
@@ -228,7 +219,8 @@ button#preview-size-button {
     justify-content: center;
 }
 
-body.show-alert .alert_wrapper{
+body.show-alert .alert_wrapper,
+body.show-info-modal .alert_wrapper{
     display: flex;
 }
 
@@ -248,8 +240,129 @@ body.compat-error .alert.compat-alert{
 body.id-error .alert.id-alert{
     display: block;
 }
+body.show-info-modal .alert.info-modal{
+    display: block;
+}
 
 code{
     background-color: rgba(0,0,0,0.5);
     padding:0.1rem;
+}
+
+
+body.small-preview .viewer-size-small{
+    display: none;
+}
+
+body:not(.small-preview) .viewer-size-big{
+    display: none;
+}
+
+.canvas-area{
+    position: relative;
+    margin: .25rem;
+    
+    width: 600px;
+    max-width: 300px;
+    max-height: 100vh;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+}
+
+
+canvas{
+    width: 100%;
+    aspect-ratio: 1;
+    /*position: fixed;*/
+    background-color: white;
+    
+    background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, transparent 25%);
+    background-size: 25px 25px;
+    background-position: 0 0, 0 0, -12.5px -12.5px, 12.5px 12.5px;
+    align-self: center;
+
+    /*background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, transparent 25%);
+    background-size: 100px 100px;
+    background-position: 0 0, 0 0, -50px -50px, 50px 50px;
+    align-self: center;*/
+}
+
+body.small-preview .canvas-area{
+    width:150px;
+}
+
+
+.canvas-area .bottom-toolbar{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+
+    display:flex;
+    justify-content: space-between;
+
+    opacity: 0.2;
+    bottom: -2rem;
+    transition: all cubic-bezier(0.165, 0.84, 0.44, 1) .25s;
+}
+
+.canvas-area:hover .bottom-toolbar{
+    opacity: 1;
+    bottom: 0px;
+}
+
+.canvas-area .top-toolbar{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+
+    display:flex;
+    justify-content: right;
+
+    opacity: 0.2;
+    top: -2rem;
+    transition: all cubic-bezier(0.165, 0.84, 0.44, 1) .25s;
+}
+
+.canvas-area:hover .top-toolbar{
+    opacity: 1;
+    top: 0px;
+}
+
+.btn-action{
+    height: 2.5rem;
+    width: 2.5rem;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+.btn-action .icon{
+    height: 2rem;
+    width: 2rem;
+}
+
+.big-button{
+    display: block;
+    margin: .5em;
+    padding: 1em;
+    background-color:#444;
+    border: 1px solid;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all .2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.apply-compat-button{
+    background-color: #388223;
+}
+.apply-compat-button:hover{
+    box-shadow: inset 0px 0px 0px 8px rgba(0,0,0,0.5);
+    background-color: #2e6e1b;
+}
+.apply-compat-button:active{
+    background-color: #1c4410;
 }

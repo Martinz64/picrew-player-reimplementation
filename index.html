@@ -13,20 +13,35 @@
     <div class="wrapper">
         
         <div class="viewer-area" id="viewer-area">
-            <header class="card">
+            <!--<header class="card">
                 <h1>Picrew Player</h1>
                 
-            </header>
-            <canvas id="viewer" height="600" width="600"></canvas>
-            <div class="toolbar">
-                <button onclick="downloadCanvas()">Download</button>
-                <button id="preview-size-button" onclick="toggleViewerSize()">-</button>
-                <div class="save-area">
-                    <button onclick="loadFromTextarea()">Load</button>
-                    <button onclick="clearLocalStorage()">Clear LocalStorage</button>
-                    <textarea name="data" id="state-data" cols="30" rows="10"></textarea>
+            </header>-->
+            <div class="canvas-area">
+                <canvas id="viewer" height="600" width="600"></canvas>
+                <div class="bottom-toolbar">
+                    <button onclick="downloadCanvas()" class="btn-action">
+                        <img src="icons/download.svg" alt="download" class="icon">
+                    </button>
+                    <button id="preview-size-button" onclick="toggleViewerSize()" class="btn-action">
+                        <img src="icons/bigger.svg" class="viewer-size-big icon" alt="big">
+                        <img src="icons/smaller.svg" class="viewer-size-small icon" alt="small">
+                    </button>
+    
+    
+                    <div class="save-area">
+                        <button onclick="loadFromTextarea()">Load</button>
+                        <button onclick="clearLocalStorage()">Clear LocalStorage</button>
+                        <textarea name="data" id="state-data" cols="30" rows="10"></textarea>
+                    </div>
+                </div>
+                <div class="top-toolbar">
+                    <button onclick="showInfo()" class="btn-action">
+                        <img src="icons/info.svg" alt="info" class="icon">
+                    </button>
                 </div>
             </div>
+            
         </div>
         <div class="selector-area" id="selector-area">
             <div id="htmladd"></div>    
@@ -39,9 +54,10 @@
             <p>
                 Due to changes on how the picrew backup tool archives files, sometimes enabling compatibility mode is necessary
             </p>
-            <p>
+            <p id="submessage_compat_alert">
                 To enable compatibility mode add <code>&compat-mode=old1</code> or <code>&compat-mode=NO_NAMES_IN_PATH</code> to the end of the url
             </p>
+
         </div>
 
         <div class="alert id-alert">
@@ -56,9 +72,14 @@
                 To load a backup, add <code>?id=&lt;folder name&gt;</code> to the end of the url and replace <code>&lt;folder name&gt;</code> with the id of the backup you placed in the <code>data</code> folder
             </p>
         </div>
+
+        <div class="alert info-modal">
+            <h1>Info</h1>
+        </div>
     </div>
     
     <div id="imgcache" style="display:none;"></div>
+    <script src="classes.js"></script>
     <script src="utils.js"></script>
     <script src="main.js"></script>
 </body>
