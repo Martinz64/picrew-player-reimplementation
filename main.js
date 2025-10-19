@@ -273,6 +273,20 @@ async function load_picrew_parts(directory){
     console.log(img)
 
 
+    let width = cf.w;
+    let height = cf.h;
+    const canvas = document.getElementById("viewer")
+    const ctx  = canvas.getContext("2d")
+    ctx.canvas.width = width
+    ctx.canvas.height = height
+    //canvas.style = "height: "+height*0.75+"px;width:"+width*0.75+"px;"
+    //canvas.style = "height: "+height*0.75+"px;width:"+width*0.75+"px;"
+    //let newHeight = height/width *300
+
+    //canvas.style = "height: "+newHeight+"px;width:"+300+"px;"
+
+
+
     let cf_parts = cf.pList;
 
     //check compat mode
